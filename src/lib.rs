@@ -13,7 +13,7 @@ use std::{
 pub mod model;
 pub use builder::QbitBuilder;
 use bytes::Bytes;
-use reqwest::{header, Client, Method, Response, StatusCode};
+use reqwest::{Client, Method, Response, StatusCode, header};
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 use tap::{Pipe, TapFallible};
@@ -207,12 +207,9 @@ impl Qbit {
             last_known_id: Option<i64>,
         }
 
-        self.get_with(
-            "log/peers",
-            &Arg {
-                last_known_id: last_known_id.into(),
-            },
-        )
+        self.get_with("log/peers", &Arg {
+            last_known_id: last_known_id.into(),
+        })
         .await?
         .json()
         .await
@@ -244,13 +241,10 @@ impl Qbit {
             rid: Option<i64>,
         }
 
-        self.get_with(
-            "sync/torrentPeers",
-            &Arg {
-                hash: hash.as_ref(),
-                rid: rid.into(),
-            },
-        )
+        self.get_with("sync/torrentPeers", &Arg {
+            hash: hash.as_ref(),
+            rid: rid.into(),
+        })
         .await
         .and_then(|r| r.map_status(TORRENT_NOT_FOUND))?
         .json()
@@ -282,7 +276,9 @@ impl Qbit {
     }
 
     pub async fn toggle_speed_limits_mode(&self) -> Result<()> {
-        self.post("transfer/toggleSpeedLimitsMode", None::<&()>).await?.end()
+        self.post("transfer/toggleSpeedLimitsMode", None::<&()>)
+            .await?
+            .end()
     }
 
     pub async fn get_download_limit(&self) -> Result<u64> {
@@ -413,13 +409,10 @@ impl Qbit {
             indexes: Option<String>,
         }
 
-        self.get_with(
-            "torrents/files",
-            &Arg {
-                hash: hash.as_ref(),
-                indexes: indexes.into().map(|s| s.to_string()),
-            },
-        )
+        self.get_with("torrents/files", &Arg {
+            hash: hash.as_ref(),
+            indexes: indexes.into().map(|s| s.to_string()),
+        })
         .await
         .and_then(|r| r.map_status(TORRENT_NOT_FOUND))?
         .json()
@@ -451,14 +444,14 @@ impl Qbit {
             .map_err(Into::into)
     }
 
-    pub async fn pause_torrents(&self, hashes: impl Into<Hashes> + Send + Sync) -> Result<()> {
-        self.post("torrents/pause", Some(&HashesArg::new(hashes)))
+    pub async fn stop_torrents(&self, hashes: impl Into<Hashes> + Send + Sync) -> Result<()> {
+        self.post("torrents/stop", Some(&HashesArg::new(hashes)))
             .await?
             .end()
     }
 
-    pub async fn resume_torrents(&self, hashes: impl Into<Hashes> + Send + Sync) -> Result<()> {
-        self.post("torrents/resume", Some(&HashesArg::new(hashes)))
+    pub async fn start_torrents(&self, hashes: impl Into<Hashes> + Send + Sync) -> Result<()> {
+        self.post("torrents/start", Some(&HashesArg::new(hashes)))
             .await?
             .end()
     }
